@@ -183,7 +183,8 @@ namespace SplitterOverBelt
             {
                 //中心にあるベルトを削除
                 Vector3 topPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * PlanetGrid.kAltGrid);
-                float limit = PlanetGrid.kAltGrid * 0.88f; //斜めに敷かれたベルトをなるべく消すため広めに取る
+                //斜めに敷かれたベルトをなるべく消すため広めに取る 広すぎると2マス隣のスプリッターから伸びたベルトも消してしまうことがある
+                float limit = PlanetGrid.kAltGrid * 0.7f;
                 for (int i = _beltEntities.Count - 1; i >= 0; i--)
                 {
                     EntityData e = _beltEntities[i];
