@@ -256,10 +256,10 @@ namespace SplitterOverBelt
         {
             internal static bool _unpatched = false;
 
-            public static void unloadConflictedMods()
+            public static void UnpatchConflictedMods()
             {
                 // SmolSplitters とコンフリクトするのでオフにする
-                // Harmonyの作り方がおかしいので ID が "harmony-auto-?????" などとなっており面倒くさい
+                // Harmonyの使い方がおかしいので ID が "harmony-auto-?????" などとなっており面倒くさい
                 var original = AccessTools.Method(typeof(PrefabDesc), "ReadPrefab");
                 if (original is null) return;
                 var patches = Harmony.GetPatchInfo(original);
@@ -281,7 +281,7 @@ namespace SplitterOverBelt
                 if (!_unpatched)
                 {
                     _unpatched = true;
-                    unloadConflictedMods();
+                    UnpatchConflictedMods();
                 }
             }
 
