@@ -91,21 +91,24 @@ namespace SplitterOverBelt
             Vector3[] snappedPos = new Vector3[poses.Length]; //splitterに繋がるベルト位置
             Vector3[] slotPos = new Vector3[poses.Length]; //splitterの中にある終端ベルト位置
             BeltData[] beltData = new BeltData[poses.Length];
+            float[] gridSize = new float[poses.Length];
             for (int i = 0; i < poses.Length; i++)
             {
-                var p = buildPreview.lpos + buildPreview.lrot * (poses[i].position + poses[i].forward * PlanetGrid.kAltGrid);
+                //グリッド幅の計算 これで良いのか？ 正しい数値が返ってきているようではある
+                gridSize[i] = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * poses[i].forward);
+                var p = buildPreview.lpos + buildPreview.lrot * (poses[i].position + poses[i].forward * gridSize[i]);
                 snappedPos[i] = tool.actionBuild.planetAux.Snap(p, false);
                 slotPos[i] = buildPreview.lpos + buildPreview.lrot * (poses[i].position);
             }
 
             //gather
-            float limit = PlanetGrid.kAltGrid * 0.1f;
             for (int k = _beltEntities.Count - 1; k >= 0; k--)
             {
                 EntityData e = _beltEntities[k];
                 for (int i = 0; i < snappedPos.Length; i++)
                 {
                     float dist = Vector3.Distance(e.pos, snappedPos[i]);
+                    float limit = gridSize[i] * 0.17f;
                     if (dist < limit)
                     {
                         //通常ありえないが非常に近い場所にベルトが存在したら削除する
@@ -182,9 +185,11 @@ namespace SplitterOverBelt
             if (buildPreview.desc.hasBuildCollider && _beltEntities.Count > 0)
             {
                 //中心にあるベルトを削除
-                Vector3 topPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * PlanetGrid.kAltGrid);
-                //斜めに敷かれたベルトをなるべく消すため広めに取る 広すぎると2マス隣のスプリッターから伸びたベルトも消してしまうことがある
-                float limit = PlanetGrid.kAltGrid * 0.7f;
+                float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * Vector3.up);
+                Vector3 topPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize);
+                //斜めに敷かれたベルトをなるべく消すため広めに取りたいが
+                //斜めのベルトよりグリッドに沿ったベルトをちゃんと扱えることの方が重要なのであまり広げすぎないようにする
+                float limit = PlanetGrid.kAltGrid * 0.3f;
                 for (int i = _beltEntities.Count - 1; i >= 0; i--)
                 {
                     EntityData e = _beltEntities[i];
