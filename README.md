@@ -20,6 +20,10 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.0.1
+
+- Improved connectivity on narrow grid / 狭いグリッドでの接続機能の向上
+
 ### v1.0.0
 
 - Initial Release for 0.7.18 game version
