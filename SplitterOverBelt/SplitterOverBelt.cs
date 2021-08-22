@@ -253,7 +253,9 @@ namespace SplitterOverBelt
                 // 0.8.20.8092よりちょっと前から _tmp_cols に全部入ってないことがあるので
                 // GetBuildingsInAreaNonAlloc で取る
                 float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
-                BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(buildPreview.lpos, gridSize * 1.2f, BuildToolAccess.nearObjectIds, false);
+                Vector3 calcPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize / 2);
+
+                BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(calcPos, gridSize * 1.4f, BuildToolAccess.nearObjectIds, false);
 
                 for (int i = 0; i < BuildToolAccess.nearObjectCount; i++)
                 {
@@ -263,8 +265,11 @@ namespace SplitterOverBelt
                         EntityData e = tool.planet.factory.entityPool[eid];
                         if (e.beltId == 0)
                         {
-                            if (gather) _beltEntities.Clear();
-                            return false;
+                            if (e.splitterId == 0)
+                            {
+                                if (gather) _beltEntities.Clear();
+                                return false;
+                            }
                         }
                         else if (gather)
                         {
