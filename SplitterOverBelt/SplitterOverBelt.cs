@@ -84,7 +84,7 @@ namespace SplitterOverBelt
             public EntityData entityData;
         }
 
-        public static void connectBelts(BuildTool_Click tool, BuildPreview buildPreview)
+        public static void ConnectBelts(BuildTool_Click tool, BuildPreview buildPreview)
         {
             Pose[] poses = buildPreview.desc.portPoses;
 
@@ -180,7 +180,7 @@ namespace SplitterOverBelt
             }
         }
 
-        public static void deleteConfusedBelts(BuildTool_Click tool, BuildPreview buildPreview)
+        public static void DeleteConfusedBelts(BuildTool_Click tool, BuildPreview buildPreview)
         {
             if (buildPreview.desc.hasBuildCollider && _beltEntities.Count > 0)
             {
@@ -226,7 +226,7 @@ namespace SplitterOverBelt
             }
         }
 
-        public static bool canBuildSplitter(BuildTool_Click tool, BuildPreview buildPreview, bool gather = false)
+        public static bool CanBuildSplitter(BuildTool_Click tool, BuildPreview buildPreview, bool gather = false)
         {
             if (buildPreview.desc.hasBuildCollider)
             {
@@ -299,7 +299,7 @@ namespace SplitterOverBelt
                     BuildPreview buildPreview = __instance.buildPreviews[0];
                     if (buildPreview.desc.isSplitter && buildPreview.condition == EBuildCondition.Collide)
                     {
-                        if (canBuildSplitter(__instance, buildPreview))
+                        if (CanBuildSplitter(__instance, buildPreview))
                         {
                             __result = true;
                             buildPreview.condition = EBuildCondition.Ok;
@@ -321,9 +321,9 @@ namespace SplitterOverBelt
                 if (_doMod && __instance.buildPreviews.Count == 1)
                 {
                     BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter && canBuildSplitter(__instance, buildPreview, true))
+                    if (buildPreview.desc.isSplitter && CanBuildSplitter(__instance, buildPreview, true))
                     {
-                        deleteConfusedBelts(__instance, buildPreview);
+                        DeleteConfusedBelts(__instance, buildPreview);
                     }
                 }
             }
@@ -336,7 +336,7 @@ namespace SplitterOverBelt
                     BuildPreview buildPreview = __instance.buildPreviews[0];
                     if (buildPreview.desc.isSplitter && buildPreview.condition == EBuildCondition.Ok)
                     {
-                        connectBelts(__instance, buildPreview);
+                        ConnectBelts(__instance, buildPreview);
                     }
                     _beltEntities.Clear();
                 }
