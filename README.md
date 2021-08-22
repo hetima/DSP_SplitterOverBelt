@@ -20,6 +20,10 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.0.3
+
+- Fix for belts in high position
+
 ### v1.0.2
 
 - Fix for 0.8.20.8092 game version
