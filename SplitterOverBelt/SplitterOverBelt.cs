@@ -33,6 +33,25 @@ namespace SplitterOverBelt
         }
 
 
+        private static void AddBeltEntity(EntityData e)
+        {
+            bool add = true;
+            for (int i = _beltEntities.Count - 1; i >= 0; i--)
+            {
+                EntityData e2 = _beltEntities[i];
+                if (e2.beltId == e.beltId)
+                {
+                    add = false;
+                    break;
+                }
+            }
+            if (add)
+            {
+                _beltEntities.Add(e);
+            }
+        }
+
+
         private static void ValidateBelt(BuildTool_Click tool, Pose slotPose, EntityData entityData, out bool validBelt, out bool isOutput)
         {
             isOutput = false;
@@ -231,22 +250,25 @@ namespace SplitterOverBelt
             if (buildPreview.desc.hasBuildCollider)
             {
                 if (gather) _beltEntities.Clear();
-                for (int i = 0; i < BuildToolAccess.TmpColsLength(); i++)
+                // 0.8.20.8092よりちょっと前から _tmp_cols に全部入ってないことがあるので
+                // GetBuildingsInAreaNonAlloc で取る
+                float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
+                BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(buildPreview.lpos, gridSize * 1.2f, BuildToolAccess.nearObjectIds, false);
+
+                for (int i = 0; i < BuildToolAccess.nearObjectCount; i++)
                 {
-                    Collider collider = BuildToolAccess.TmpCols()[i];
-                    ColliderData colliderData;
-                    if (tool.planet.physics.GetColliderData(collider, out colliderData) && colliderData.objType == EObjectType.Entity)
+                    int eid = BuildToolAccess.nearObjectIds[i];
+                    if (eid > 0)
                     {
-                        int eid = colliderData.objId;
                         EntityData e = tool.planet.factory.entityPool[eid];
-                        if(e.beltId <= 0)
+                        if (e.beltId == 0)
                         {
                             if (gather) _beltEntities.Clear();
                             return false;
                         }
-                        else
+                        else if (gather)
                         {
-                            if(gather) _beltEntities.Add(e);
+                            AddBeltEntity(e);
                         }
                     }
                 }
@@ -364,6 +386,26 @@ namespace SplitterOverBelt
             public static Collider[] TmpCols()
             {
                 return _tmp_cols;
+            }
+
+            public static int[] nearObjectIds
+            {
+                get
+                {
+                    return _nearObjectIds;
+                }
+                
+            }
+            public static int nearObjectCount
+            {
+                get
+                {
+                    return _nearObjectCount;
+                }
+                set
+                {
+                    _nearObjectCount = value;
+                }
             }
 
         }
