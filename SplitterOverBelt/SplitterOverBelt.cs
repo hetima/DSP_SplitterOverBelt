@@ -51,7 +51,6 @@ namespace SplitterOverBelt
             }
         }
 
-
         private static void ValidateBelt(BuildTool_Click tool, Pose slotPose, EntityData entityData, out bool validBelt, out bool isOutput)
         {
             isOutput = false;
@@ -201,7 +200,7 @@ namespace SplitterOverBelt
 
         public static void DeleteConfusedBelts(BuildTool_Click tool, BuildPreview buildPreview)
         {
-            if (buildPreview.desc.hasBuildCollider && _beltEntities.Count > 0)
+            if (_beltEntities.Count > 0)
             {
                 //中心にあるベルトを削除
                 float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * Vector3.up);
@@ -247,84 +246,55 @@ namespace SplitterOverBelt
 
         public static bool CanBuildSplitter(BuildTool_Click tool, BuildPreview buildPreview, bool gather = false)
         {
-            if (buildPreview.desc.hasBuildCollider)
+            bool result = false;
+
+            if (gather) _beltEntities.Clear();
+
+            float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
+            Vector3 calcPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize / 2);
+
+            BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(calcPos, gridSize * 1.4f, BuildToolAccess.nearObjectIds, false);
+
+            for (int i = 0; i < BuildToolAccess.nearObjectCount; i++)
             {
-                if (gather) _beltEntities.Clear();
-                // 0.8.20.8092よりちょっと前から _tmp_cols に全部入ってないことがあるので
-                // GetBuildingsInAreaNonAlloc で取る
-                float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
-                Vector3 calcPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize / 2);
-
-                BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(calcPos, gridSize * 1.4f, BuildToolAccess.nearObjectIds, false);
-
-                for (int i = 0; i < BuildToolAccess.nearObjectCount; i++)
+                int eid = BuildToolAccess.nearObjectIds[i];
+                if (eid > 0)
                 {
-                    int eid = BuildToolAccess.nearObjectIds[i];
-                    if (eid > 0)
+                    EntityData e = tool.planet.factory.entityPool[eid];
+                    if (e.beltId == 0)
                     {
-                        EntityData e = tool.planet.factory.entityPool[eid];
-                        if (e.beltId == 0)
+                        if (e.splitterId == 0 && buildPreview.condition == EBuildCondition.Collide)
                         {
-                            if (e.splitterId == 0)
-                            {
-                                if (gather) _beltEntities.Clear();
-                                return false;
-                            }
+                            if (gather) _beltEntities.Clear();
+                            return false;
                         }
-                        else if (gather)
+                    }
+                    else
+                    {
+                        result = true;
+                        if (gather)
                         {
                             AddBeltEntity(e);
                         }
                     }
                 }
-                return true;
             }
-            return false;
+            return result;
         }
 
 
 
         static class Patch
         {
-            internal static bool _unpatched = false;
-
-            public static void UnpatchConflictedMods()
-            {
-                // SmolSplitters とコンフリクトするのでオフにする
-                // Harmonyの使い方がおかしいので ID が "harmony-auto-?????" などとなっており面倒くさい
-                var original = AccessTools.Method(typeof(PrefabDesc), "ReadPrefab");
-                if (original is null) return;
-                var patches = Harmony.GetPatchInfo(original);
-                if (patches is null) return;
-                foreach (var patch in patches.Postfixes)
-                {
-                    if (patch.PatchMethod.DeclaringType.FullName == "Mo3sDspMods.SmolSplittersPlugin+SplitterColliderPatch")
-                    {
-                        new Harmony(patch.owner).UnpatchSelf();
-                        Logger.LogInfo("Unpatch SmolSplitters");
-                        break;
-                    }
-                }
-            }
-
-            [HarmonyPrefix, HarmonyPatch(typeof(VFPreload), "Start")]
-            public static void PatchForUnloadConflictedMod()
-            {
-                if (!_unpatched)
-                {
-                    _unpatched = true;
-                    UnpatchConflictedMods();
-                }
-            }
 
             [HarmonyPostfix, HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions")]
             public static void BuildTool_Click_CheckBuildConditions_Postfix(BuildTool_Click __instance, ref bool __result)
             {
                 _doMod = false;
-                if (!__result && __instance.buildPreviews.Count == 1)
+                if (__instance.buildPreviews.Count == 1)
                 {
                     BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter && buildPreview.condition == EBuildCondition.Collide)
+                    if (buildPreview.desc.isSplitter && (buildPreview.condition == EBuildCondition.Collide || buildPreview.condition == EBuildCondition.Ok))
                     {
                         if (CanBuildSplitter(__instance, buildPreview))
                         {
