@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace SplitterOverBelt
 {
-    [BepInPlugin(__GUID__, __NAME__, "1.0.3")]
+    [BepInPlugin(__GUID__, __NAME__, "1.0.4")]
     public class SplitterOverBelt : BaseUnityPlugin
     {
         public const string __NAME__ = "SplitterOverBelt";
@@ -272,7 +272,6 @@ namespace SplitterOverBelt
         public static bool GatherNearBelts(BuildTool_Click tool, BuildPreview buildPreview)
         {
             bool result = false;
-
             _beltEntities.Clear();
 
             float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);

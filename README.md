@@ -3,7 +3,6 @@
 Mod for Dyson Sphere Program. Needs BepInEx.
 
 - Alternative to [SplitterOverConveyor](https://dsp.thunderstore.io/package/KingEnderBrine/SplitterOverConveyor/)
-- Conflicts with [SmolSplitters](https://dsp.thunderstore.io/package/markusmo3/SmolSplitters/)
 
 
 The splitter can be placed in a position where it overlaps conveyor belts and properly connected automatically.  
@@ -19,6 +18,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 
 ## Release Notes
+
+### v1.0.4
+- Compatibility with other mods that reduce collision detection like SmolSplitters or BuildingMoreDense
 
 ### v1.0.3
 
