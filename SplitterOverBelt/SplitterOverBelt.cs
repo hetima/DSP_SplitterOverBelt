@@ -244,11 +244,36 @@ namespace SplitterOverBelt
             }
         }
 
-        public static bool CanBuildSplitter(BuildTool_Click tool, BuildPreview buildPreview, bool gather = false)
+        public static bool CanBuildSplitter(BuildTool_Click tool, BuildPreview buildPreview)
+        {
+            for (int i = 0; i < BuildToolAccess.TmpColsLength(); i++)
+            {
+                Collider collider = BuildToolAccess.TmpCols[i];
+                ColliderData colliderData;
+                if (tool.planet.physics.GetColliderData(collider, out colliderData))
+                {
+                    if (colliderData.objType == EObjectType.Entity) {
+                        int eid = colliderData.objId;
+                        EntityData e = tool.planet.factory.entityPool[eid];
+                        if (e.beltId == 0)
+                        {
+                            return false;
+                        }
+                    }
+                    else //Vein etc
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public static bool GatherNearBelts(BuildTool_Click tool, BuildPreview buildPreview)
         {
             bool result = false;
 
-            if (gather) _beltEntities.Clear();
+            _beltEntities.Clear();
 
             float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
             Vector3 calcPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize / 2);
@@ -261,21 +286,10 @@ namespace SplitterOverBelt
                 if (eid > 0)
                 {
                     EntityData e = tool.planet.factory.entityPool[eid];
-                    if (e.beltId == 0)
-                    {
-                        if (e.splitterId == 0 && buildPreview.condition == EBuildCondition.Collide)
-                        {
-                            if (gather) _beltEntities.Clear();
-                            return false;
-                        }
-                    }
-                    else
+                    if (e.beltId != 0)
                     {
                         result = true;
-                        if (gather)
-                        {
-                            AddBeltEntity(e);
-                        }
+                        AddBeltEntity(e);
                     }
                 }
             }
@@ -294,9 +308,13 @@ namespace SplitterOverBelt
                 if (__instance.buildPreviews.Count == 1)
                 {
                     BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter && (buildPreview.condition == EBuildCondition.Collide || buildPreview.condition == EBuildCondition.Ok))
+                    if (buildPreview.desc.isSplitter)
                     {
-                        if (CanBuildSplitter(__instance, buildPreview))
+                        if (buildPreview.condition == EBuildCondition.Ok)
+                        {
+                            _doMod = true;
+                        }
+                        else if (buildPreview.condition == EBuildCondition.Collide && CanBuildSplitter(__instance, buildPreview))
                         {
                             __result = true;
                             buildPreview.condition = EBuildCondition.Ok;
@@ -318,7 +336,7 @@ namespace SplitterOverBelt
                 if (_doMod && __instance.buildPreviews.Count == 1)
                 {
                     BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter && CanBuildSplitter(__instance, buildPreview, true))
+                    if (buildPreview.desc.isSplitter && GatherNearBelts(__instance, buildPreview))
                     {
                         DeleteConfusedBelts(__instance, buildPreview);
                     }
@@ -336,6 +354,7 @@ namespace SplitterOverBelt
                         ConnectBelts(__instance, buildPreview);
                     }
                     _beltEntities.Clear();
+                    _doMod = false;
                 }
             }
         }
@@ -358,9 +377,12 @@ namespace SplitterOverBelt
                 }
                 return result;
             }
-            public static Collider[] TmpCols()
+            public static Collider[] TmpCols
             {
-                return _tmp_cols;
+                get
+                {
+                    return _tmp_cols;
+                }
             }
 
             public static int[] nearObjectIds
