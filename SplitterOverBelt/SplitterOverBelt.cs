@@ -260,6 +260,16 @@ namespace SplitterOverBelt
                             return false;
                         }
                     }
+                    //else if(colliderData.objType == EObjectType.Prebuild)
+                    //{
+                        //PrebuildData d = tool.factory.prebuildPool[-colliderData.objId];
+                        //UIRealtimeTip.Popup("" + d.recipeId, false, 0);
+                        //PrefabDesc desc = tool.GetPrefabDesc(colliderData.objId);
+                        //if (!tool.ObjectIsBelt(colliderData.objId))
+                        //{
+                        //}
+                        //return false;
+                    //}
                     else //Vein etc
                     {
                         return false;
