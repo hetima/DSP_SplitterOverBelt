@@ -51,12 +51,13 @@ namespace SplitterOverBelt
             }
         }
 
-        private static void ValidateBelt(BuildTool_Click tool, Pose slotPose, EntityData entityData, out bool validBelt, out bool isOutput)
+        private static void ValidateBelt(BuildTool_Click tool, BuildPreview buildPreview, Pose slotPose, EntityData entityData, out bool validBelt, out bool isOutput)
         {
             isOutput = false;
             validBelt = false;
 
-            Pose pose = tool.GetObjectPose(tool.buildPreviews[0].objId);
+            //Pose pose = tool.GetObjectPose(tool.buildPreviews[0].objId);
+            Pose pose = new Pose(buildPreview.lpos, buildPreview.lrot);
             Vector3 slotDirection = pose.rotation * slotPose.forward;
 
             BeltComponent belt = tool.factory.cargoTraffic.beltPool[entityData.beltId];
@@ -102,21 +103,29 @@ namespace SplitterOverBelt
             public EntityData entityData;
         }
 
-        public static void ConnectBelts(BuildTool_Click tool, BuildPreview buildPreview)
+        public static void ConnectBelts(BuildTool_Click tool, List<BuildPreview> buildPreviews)
         {
+
+            BuildPreview buildPreview = buildPreviews[0];
             Pose[] poses = buildPreview.desc.portPoses;
 
             Vector3[] snappedPos = new Vector3[poses.Length]; //splitterに繋がるベルト位置
             Vector3[] slotPos = new Vector3[poses.Length]; //splitterの中にある終端ベルト位置
             BeltData[] beltData = new BeltData[poses.Length];
             float[] gridSize = new float[poses.Length];
+            Quaternion lrot = buildPreview.lrot;
+            //CreatePrebuilds() でこうやってる 特に変化はない気がする
+            if (buildPreview.isConnNode)
+            {
+                lrot = Maths.SphericalRotation(buildPreview.lpos, 0f);
+            }
             for (int i = 0; i < poses.Length; i++)
             {
                 //グリッド幅の計算 これで良いのか？ 正しい数値が返ってきているようではある
-                gridSize[i] = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * poses[i].forward);
-                var p = buildPreview.lpos + buildPreview.lrot * (poses[i].position + poses[i].forward * gridSize[i]);
+                gridSize[i] = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, lrot * poses[i].forward);
+                Vector3 p = buildPreview.lpos + lrot * (poses[i].position + poses[i].forward * gridSize[i]);
                 snappedPos[i] = tool.actionBuild.planetAux.Snap(p, false);
-                slotPos[i] = buildPreview.lpos + buildPreview.lrot * (poses[i].position);
+                slotPos[i] = buildPreview.lpos + lrot * (poses[i].position);
             }
 
             //gather
@@ -136,14 +145,17 @@ namespace SplitterOverBelt
                             _beltEntities.RemoveAt(k);
                             break;
                         }
+
                         bool validBelt;
                         bool isOutput;
-                        ValidateBelt(tool, poses[i], e, out validBelt, out isOutput);
+                        Quaternion rotation = poses[i].rotation;
+
+                        ValidateBelt(tool, buildPreview, poses[i], e, out validBelt, out isOutput);
                         if (validBelt)
                         {
                             beltData[i].splitterSlot = i;
                             beltData[i].slotPos = slotPos[i];
-                            beltData[i].slotRot = poses[i].rotation;
+                            beltData[i].slotRot = rotation;
                             beltData[i].entityData = e;
                             beltData[i].validBelt = validBelt;
                             beltData[i].isOutput = isOutput;
@@ -161,22 +173,37 @@ namespace SplitterOverBelt
                     continue;
                 }
 
-                var connectionPrebuildData = new PrebuildData
-                {
-                    protoId = beltData[i].entityData.protoId,
-                    modelIndex = beltData[i].entityData.modelIndex,
-                    pos = beltData[i].slotPos,
-                    pos2 = Vector3.zero,
-                    rot = buildPreview.lrot * beltData[i].slotRot,
-                    rot2 = Quaternion.identity,
-                };
+                BuildPreview beltBuildPreview = new BuildPreview();
+                PrefabDesc desc = LDB.models.Select(beltData[i].entityData.modelIndex)?.prefabDesc;
+                beltBuildPreview.ResetAll();
+                beltBuildPreview.item = LDB.items.Select(beltData[i].entityData.protoId);
+                beltBuildPreview.desc = desc;
 
-                var id = (int)beltData[i].entityData.protoId;
-                var count = 1;
-                tool.player.package.TakeTailItems(ref id, ref count);
+                beltBuildPreview.lpos = beltData[i].slotPos;
+                beltBuildPreview.lpos2 = Vector3.zero;
+                beltBuildPreview.lrot = lrot * beltData[i].slotRot;
+                beltBuildPreview.lrot2 = Quaternion.identity;
+                beltBuildPreview.needModel = false;
+                beltBuildPreview.isConnNode = false;//trueにすべき？
+                beltBuildPreview.outputOffset = 0;
 
-                var objId = -tool.factory.AddPrebuildDataWithComponents(connectionPrebuildData);
-                var otherBeltSlot = -1;
+
+                //var connectionPrebuildData = new PrebuildData
+                //{
+                //    protoId = beltData[i].entityData.protoId,
+                //    modelIndex = beltData[i].entityData.modelIndex,
+                //    pos = beltData[i].slotPos,
+                //    pos2 = Vector3.zero,
+                //    rot = lrot * beltData[i].slotRot,
+                //    rot2 = Quaternion.identity,
+                //};
+
+                //var id = (int)beltData[i].entityData.protoId;
+                //var count = 1;
+                //tool.player.package.TakeTailItems(ref id, ref count);
+
+                //var objId = -tool.factory.AddPrebuildDataWithComponents(connectionPrebuildData);
+                var otherBeltSlot = 1; //-1だと4～11のうち空いてる最小スロットになる？
                 if (!beltData[i].isOutput)
                 {
                     otherBeltSlot = 0;
@@ -193,8 +220,45 @@ namespace SplitterOverBelt
                         }
                     }
                 }
-                tool.factory.WriteObjectConn(objId, beltData[i].isOutput ? 1 : 0, !beltData[i].isOutput, buildPreview.objId, beltData[i].splitterSlot);
-                tool.factory.WriteObjectConn(objId, beltData[i].isOutput ? 0 : 1, beltData[i].isOutput, beltData[i].entityData.id, otherBeltSlot);
+
+                //接続
+
+                //これが実行される
+                //this.factory.WriteObjectConn(bp.objId, bp.outputFromSlot, true, bp.output.objId, bp.outputToSlot);
+                //this.factory.WriteObjectConn(bp.objId, bp.inputToSlot, false, bp.input.objId, bp.inputFromSlot);
+
+                if (beltData[i].isOutput)
+                {
+                    //以前実行してたコード
+                    //tool.factory.WriteObjectConn(objId, 0, true, beltData[i].entityData.id, otherBeltSlot);
+                    //tool.factory.WriteObjectConn(objId, 1, false, buildPreview.objId, beltData[i].splitterSlot);
+                    beltBuildPreview.output = null;
+                    beltBuildPreview.outputObjId = beltData[i].entityData.id;
+                    beltBuildPreview.outputFromSlot = 0;
+                    beltBuildPreview.outputToSlot = otherBeltSlot;
+
+                    beltBuildPreview.input = buildPreview;
+                    beltBuildPreview.inputObjId = 0;
+                    beltBuildPreview.inputToSlot = 1;
+                    beltBuildPreview.inputFromSlot = beltData[i].splitterSlot;
+                }
+                else
+                {
+                    //以前実行してたコード
+                    //tool.factory.WriteObjectConn(objId, 0, true, buildPreview.objId, beltData[i].splitterSlot);
+                    //tool.factory.WriteObjectConn(objId, 1, false, beltData[i].entityData.id, otherBeltSlot);
+                    beltBuildPreview.output = buildPreview;
+                    beltBuildPreview.outputObjId = 0;
+                    beltBuildPreview.outputFromSlot = 0;
+                    beltBuildPreview.outputToSlot = beltData[i].splitterSlot;
+
+                    beltBuildPreview.input = null;
+                    beltBuildPreview.inputObjId = beltData[i].entityData.id;
+                    beltBuildPreview.inputToSlot = 1;
+                    beltBuildPreview.inputFromSlot = otherBeltSlot;
+                }
+
+                buildPreviews.Add(beltBuildPreview);
             }
         }
 
@@ -284,6 +348,10 @@ namespace SplitterOverBelt
             bool result = false;
             _beltEntities.Clear();
 
+            if (buildPreview?.desc == null || tool.actionBuild?.planetAux?.activeGrid == null || tool.actionBuild?.nearcdLogic == null)
+            {
+                return false;
+            }
             float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
             Vector3 calcPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize / 2);
 
@@ -305,14 +373,13 @@ namespace SplitterOverBelt
             return result;
         }
 
-
-
         static class Patch
         {
 
-            [HarmonyPostfix, HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions")]
+            [HarmonyPostfix, HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions"), HarmonyAfter("dsp.nebula-multiplayer")]
             public static void BuildTool_Click_CheckBuildConditions_Postfix(BuildTool_Click __instance, ref bool __result)
             {
+
                 _doMod = false;
                 if (__instance.buildPreviews.Count == 1)
                 {
@@ -339,33 +406,40 @@ namespace SplitterOverBelt
                 }
             }
 
-            [HarmonyPrefix, HarmonyPatch(typeof(BuildTool_Click), "CreatePrebuilds")]
+            [HarmonyPrefix, HarmonyPatch(typeof(BuildTool_Click), "CreatePrebuilds"), HarmonyBefore("dsp.nebula-multiplayer")]
             public static void BuildTool_Click_CreatePrebuilds_Prefix(BuildTool_Click __instance)
             {
+
                 if (_doMod && __instance.buildPreviews.Count == 1)
                 {
+                    _doMod = false;
                     BuildPreview buildPreview = __instance.buildPreviews[0];
                     if (buildPreview.desc.isSplitter && GatherNearBelts(__instance, buildPreview))
                     {
                         DeleteConfusedBelts(__instance, buildPreview);
                     }
+                    if (_beltEntities.Count > 0)
+                    {
+                        if (buildPreview.desc.isSplitter && buildPreview.condition == EBuildCondition.Ok)
+                        {
+                            ConnectBelts(__instance, __instance.buildPreviews);
+                        }
+                        _beltEntities.Clear();
+                    }
                 }
             }
 
-            [HarmonyPostfix, HarmonyPatch(typeof(BuildTool_Click), "CreatePrebuilds")]
-            public static void BuildTool_Click_CreatePrebuilds_Postfix(BuildTool_Click __instance)
+            [HarmonyPostfix, HarmonyPatch(typeof(BuildTool_Click), "ConfirmOperation")]
+            public static void BuildTool_Click_ConfirmOperation_Postfix(BuildTool_Click __instance, ref bool __result)
             {
-                if (_doMod && __instance.buildPreviews.Count == 1 && _beltEntities.Count > 0)
+                //CreatePrebuilds しなかった場合 _doMod の状態がリセットされない
+                //普段は問題ないが Nebula が直接 CreatePrebuilds を呼ぶので前の状態が残っているとまずい
+                if (!__result && _doMod)
                 {
-                    BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter && buildPreview.condition == EBuildCondition.Ok)
-                    {
-                        ConnectBelts(__instance, buildPreview);
-                    }
-                    _beltEntities.Clear();
                     _doMod = false;
                 }
             }
+
         }
 
         public class BuildToolAccess : BuildTool
