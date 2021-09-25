@@ -1,7 +1,7 @@
 {
     "name": "SplitterOverBelt",
     "description": "Alternative to SplitterOverConveyor. The splitter can be placed overlaps conveyor belts and properly connected.",
-    "version_number": "1.0.4",
+    "version_number": "1.0.5",
     "dependencies": [],
     "website_url": "https://github.com/hetima/DSP_SplitterOverBelt"
 }

@@ -19,6 +19,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.0.5
+- Probably compatible with NebulaMultiplayerMod 0.6.0
+
 ### v1.0.4
 - Compatibility with other mods that reduce collision detection like SmolSplitters or BuildingMoreDense
 
