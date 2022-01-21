@@ -19,6 +19,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.0.6
+- Rebuild for 0.9.24.11209 game version (It won't work on 11192 or earlyer. Check for the latest game update)
+
 ### v1.0.5
 - Probably compatible with NebulaMultiplayerMod 0.6.0
 
