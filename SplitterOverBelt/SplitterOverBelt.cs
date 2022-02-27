@@ -93,6 +93,48 @@ namespace SplitterOverBelt
             }
         }
 
+        //位置は検証済み
+        //中心は削除済み
+        //角度は考慮せずベルトの端かどうかだけ調べる版
+        private static void ValidateBelt2(BuildTool_Click tool, BuildPreview buildPreview, Pose slotPose, EntityData entityData, out bool validBelt, out bool isOutput)
+        {
+            isOutput = false;
+            validBelt = false;
+
+            int objId = entityData.id;
+            bool hasOutput = false;
+            bool hasInput = false;
+            for (int i = 0; i < 4; i++)
+            {
+                tool.factory.ReadObjectConn(objId, i, out bool isOutput2, out int otherId, out int _);
+                if (otherId != 0)
+                {
+                    if (isOutput2)
+                    {
+                        hasInput = true;
+                    }
+                    else
+                    {
+                        hasOutput = true;
+                    }
+                }
+            }
+            if (hasInput == hasOutput)
+            {
+                validBelt = false;
+            }
+            else if (hasInput)
+            {
+                isOutput = true;
+                validBelt = true;
+            }
+            else if (hasOutput)
+            {
+                isOutput = false;
+                validBelt = true;
+            }
+        }
+
         public struct BeltData
         {
             public bool validBelt;
@@ -134,11 +176,13 @@ namespace SplitterOverBelt
                 EntityData e = _beltEntities[k];
                 for (int i = 0; i < snappedPos.Length; i++)
                 {
-                    float dist = Vector3.Distance(e.pos, snappedPos[i]);
+                    //snapして計算すると斜めのベルトも繋がりやすくなった
+                    Vector3 spos = tool.actionBuild.planetAux.Snap(e.pos, false);
+                    float dist = (spos - snappedPos[i]).sqrMagnitude;
                     float limit = gridSize[i] * 0.17f;
-                    if (dist < limit)
+                    if (dist < (limit * limit))
                     {
-                        //通常ありえないが非常に近い場所にベルトが存在したら削除する
+                        //通常ありえないが非常に近い場所にベルトが存在したら削除する snapするようにしたので可能性が高くなった
                         if (beltData[i].validBelt)
                         {
                             tool.actionBuild.DoDismantleObject(e.id);
@@ -150,7 +194,7 @@ namespace SplitterOverBelt
                         bool isOutput;
                         Quaternion rotation = poses[i].rotation;
 
-                        ValidateBelt(tool, buildPreview, poses[i], e, out validBelt, out isOutput);
+                        ValidateBelt2(tool, buildPreview, poses[i], e, out validBelt, out isOutput);
                         if (validBelt)
                         {
                             beltData[i].splitterSlot = i;
@@ -269,17 +313,19 @@ namespace SplitterOverBelt
                 //中心にあるベルトを削除
                 float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * Vector3.up);
                 Vector3 topPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize);
-                //斜めに敷かれたベルトをなるべく消すため広めに取りたいが
-                //斜めのベルトよりグリッドに沿ったベルトをちゃんと扱えることの方が重要なのであまり広げすぎないようにする
+                //中心からの距離判定 snapさせるのであまり意味はない
                 float limit = PlanetGrid.kAltGrid * 0.3f;
+                float sqrLlimit = (limit * limit);
+
                 for (int i = _beltEntities.Count - 1; i >= 0; i--)
                 {
                     EntityData e = _beltEntities[i];
                     if (e.beltId > 0)
                     {
-                        float dist = Vector3.Distance(e.pos, buildPreview.lpos);
-                        float dist2 = Vector3.Distance(e.pos, topPos);
-                        if (dist < limit || dist2 < limit)
+                        Vector3 spos = tool.actionBuild.planetAux.Snap(e.pos, false);
+                        float dist = (spos - buildPreview.lpos).sqrMagnitude;
+                        float dist2 = (spos - topPos).sqrMagnitude;
+                        if (dist < sqrLlimit || dist2 < sqrLlimit)
                         {
                             tool.actionBuild.DoDismantleObject(e.id);
                             _beltEntities.RemoveAt(i);
@@ -310,10 +356,36 @@ namespace SplitterOverBelt
 
         public static bool CanBuildSplitter(BuildTool_Click tool, BuildPreview buildPreview)
         {
+            //中心にあるベルトかどうか調べるための情報
+            float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * Vector3.up);
+            Vector3 topPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize);
+            float limit = gridSize * 0.3f;
+            float sqrLlimit = (limit * limit);
+
+            //繋がるベルトかどうか調べるための情報
+            Vector3[] snappedPos = new Vector3[buildPreview.desc.portPoses.Length]; //splitterに繋がるベルト位置
+            float[] gridSizes = new float[buildPreview.desc.portPoses.Length];
+            Quaternion lrot = buildPreview.lrot;
+            //CreatePrebuilds() でこうやってる 特に変化はない気がする
+            if (buildPreview.isConnNode)
+            {
+                lrot = Maths.SphericalRotation(buildPreview.lpos, 0f);
+            }
+            for (int i = 0; i < buildPreview.desc.portPoses.Length; i++)
+            {
+                Pose pose = buildPreview.desc.portPoses[i];
+                gridSizes[i] = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, lrot * pose.forward);
+                Vector3 p = buildPreview.lpos + lrot * (pose.position + pose.forward * gridSize);
+                snappedPos[i] = tool.actionBuild.planetAux.Snap(p, false);
+                //slotPos[i] = buildPreview.lpos + lrot * (poses[i].position);
+            }
+
+
             for (int i = 0; i < BuildToolAccess.TmpColsLength(); i++)
             {
                 Collider collider = BuildToolAccess.TmpCols[i];
                 ColliderData colliderData;
+                //colliderData取れないケースがあった
                 if (tool.planet.physics.GetColliderData(collider, out colliderData))
                 {
                     if (colliderData.objType == EObjectType.Entity) {
@@ -322,6 +394,51 @@ namespace SplitterOverBelt
                         if (e.beltId == 0)
                         {
                             return false;
+                        }
+                        else
+                        {
+                            Vector3 spos = tool.actionBuild.planetAux.Snap(e.pos, false);
+                            float dist = (spos - buildPreview.lpos).sqrMagnitude;
+                            float dist2 = (spos - topPos).sqrMagnitude;
+                            if (dist < sqrLlimit)
+                            {
+                                //中心 0.5もこっちでヒットする(Snapしてるせいで)
+                                continue;
+                            }
+                            else if (dist2 < sqrLlimit)
+                            {
+                                //中心 上
+                                if (buildPreview.item.ModelCount > 0 && tool.modelOffset % buildPreview.item.ModelCount == 0)
+                                {
+                                    //中心と繋がっているベルトのcolliderDataを取れないときの保険
+                                    return false;
+                                }
+                                continue;
+                            }
+                            else
+                            {
+                                //中心ではない
+                                //繋がるものも含まれる
+                                bool validBelt = false;
+                                for (int j = 0; j < buildPreview.desc.portPoses.Length; j++)
+                                {
+                                    float dist3 = (spos - snappedPos[j]).sqrMagnitude;
+                                    float limit2 = gridSizes[j] * 0.17f;
+                                    if (dist3 < (limit2 * limit2))
+                                    {
+                                        ValidateBelt(tool, buildPreview, buildPreview.desc.portPoses[j], e, out validBelt, out _);
+                                        if (validBelt)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (validBelt)
+                                {
+                                    continue;
+                                }
+                                return false;
+                            }
                         }
                     }
                     //else if(colliderData.objType == EObjectType.Prebuild)
@@ -381,6 +498,10 @@ namespace SplitterOverBelt
             {
 
                 _doMod = false;
+                //if (VFInput.control)
+                //{
+                //    return;
+                //}
                 if (__instance.buildPreviews.Count == 1)
                 {
                     BuildPreview buildPreview = __instance.buildPreviews[0];
