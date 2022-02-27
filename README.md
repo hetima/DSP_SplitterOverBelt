@@ -6,11 +6,9 @@ Mod for Dyson Sphere Program. Needs BepInEx.
 
 
 The splitter can be placed in a position where it overlaps conveyor belts and properly connected automatically.  
-It also mitigate the judgment of collision with conveyor belts and allows place in a smaller space than usual.  
 
 
 コンベアベルトと重なる位置にスプリッターを設置できるようになり、適切なスロットに接続されます。  
-また、コンベアベルトとの衝突判定が緩和され、通常より狭い空間に設置できるようにもなります。  
 
 ---
 
@@ -18,6 +16,10 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 
 ## Release Notes
+
+### v1.1.0
+- Made collision detection more strict, closer to the original implementation
+- Slightly improved connectivity for diagonal belts that do not follow the grid
 
 ### v1.0.6
 - Rebuild for 0.9.24.11209 game version (It won't work on 11192 or earlyer. Check for the latest game update)
