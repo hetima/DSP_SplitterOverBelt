@@ -505,7 +505,7 @@ namespace SplitterOverBelt
                 if (__instance.buildPreviews.Count == 1)
                 {
                     BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter)
+                    if (buildPreview.desc.isSplitter || buildPreview.desc.isPiler)
                     {
                         if (buildPreview.condition == EBuildCondition.Ok)
                         {
@@ -535,13 +535,13 @@ namespace SplitterOverBelt
                 {
                     _doMod = false;
                     BuildPreview buildPreview = __instance.buildPreviews[0];
-                    if (buildPreview.desc.isSplitter && GatherNearBelts(__instance, buildPreview))
+                    if ((buildPreview.desc.isSplitter || buildPreview.desc.isPiler ) && GatherNearBelts(__instance, buildPreview))
                     {
                         DeleteConfusedBelts(__instance, buildPreview);
                     }
                     if (_beltEntities.Count > 0)
                     {
-                        if (buildPreview.desc.isSplitter && buildPreview.condition == EBuildCondition.Ok)
+                        if ((buildPreview.desc.isSplitter || buildPreview.desc.isPiler) && buildPreview.condition == EBuildCondition.Ok)
                         {
                             ConnectBelts(__instance, __instance.buildPreviews);
                         }
