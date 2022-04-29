@@ -2,20 +2,25 @@
 
 Mod for Dyson Sphere Program. Needs BepInEx.
 
-- Alternative to [SplitterOverConveyor](https://dsp.thunderstore.io/package/KingEnderBrine/SplitterOverConveyor/)
+Splitter can be placed in a position where it overlaps conveyor belts and properly connected automatically.  
 
-
-The splitter can be placed in a position where it overlaps conveyor belts and properly connected automatically.  
-
+Automatic Piler is now supported, but may cause unexpected behavior due to lack of verification.
 
 コンベアベルトと重なる位置にスプリッターを設置できるようになり、適切なスロットに接続されます。  
 
+自動集積機にも対応するようになりましたが、検証不足のため予期しない動作を起こすかもしれません。
+
 ---
+
+This mod is alternative to [SplitterOverConveyor](https://dsp.thunderstore.io/package/KingEnderBrine/SplitterOverConveyor/)
 
 Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 
 ## Release Notes
+
+### v1.1.1
+- Experimental support for Automatic Piler. It may not work well because this is simply adapted from the code for Splitter.
 
 ### v1.1.0
 - Made collision detection more strict, closer to the original implementation
