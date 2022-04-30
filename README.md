@@ -19,6 +19,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v
+- Display caution when Piler is facing the wrong way
+
 ### v1.1.1
 - Experimental support for Automatic Piler. It may not work well because this is simply adapted from the code for Splitter.
 
