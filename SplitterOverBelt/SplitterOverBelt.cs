@@ -22,6 +22,7 @@ namespace SplitterOverBelt
 
         protected static List<EntityData> _beltEntities = new List<EntityData>(20);
         protected static bool _doMod = false;
+        protected static string _warningString;
 
         new internal static ManualLogSource Logger;
         void Awake()
@@ -426,9 +427,18 @@ namespace SplitterOverBelt
                                     float limit2 = gridSizes[j] * 0.17f;
                                     if (dist3 < (limit2 * limit2))
                                     {
-                                        ValidateBelt(tool, buildPreview, buildPreview.desc.portPoses[j], e, out validBelt, out _);
+                                        ValidateBelt(tool, buildPreview, buildPreview.desc.portPoses[j], e, out validBelt, out bool isOutput);
                                         if (validBelt)
                                         {
+                                            if (buildPreview.desc.isPiler)
+                                            {
+                                                if (j == 0 && !isOutput || j == 1 && isOutput)
+                                                {
+                                                    string test = isOutput.ToString();
+                                                    _warningString = "(Piler is facing the wrong way)";
+                                                }
+                                            }
+                                            
                                             break;
                                         }
                                     }
@@ -437,6 +447,7 @@ namespace SplitterOverBelt
                                 {
                                     continue;
                                 }
+                                _warningString = null;
                                 return false;
                             }
                         }
@@ -498,6 +509,7 @@ namespace SplitterOverBelt
             {
 
                 _doMod = false;
+                _warningString = null;
                 //if (VFInput.control)
                 //{
                 //    return;
@@ -557,6 +569,12 @@ namespace SplitterOverBelt
                 //普段は問題ないが Nebula が直接 CreatePrebuilds を呼ぶので前の状態が残っているとまずい
                 if (!__result && _doMod)
                 {
+                    if (_warningString != null)
+                    {
+                        __instance.actionBuild.model.cursorText += " <color=#fbce32ff>" + _warningString + "</color>";
+                        _warningString = null;
+                    }
+
                     _doMod = false;
                 }
             }
