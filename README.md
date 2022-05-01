@@ -19,7 +19,7 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
-### v
+### v1.1.2
 - Display caution when Piler is facing the wrong way
 
 ### v1.1.1
