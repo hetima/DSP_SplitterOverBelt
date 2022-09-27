@@ -19,6 +19,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.1.3
+- Support game version 0.9.27.14546 (just rebuild only)
+
 ### v1.1.2
 - Display caution when Piler is facing the wrong way
 
