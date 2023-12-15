@@ -12,7 +12,7 @@ using UnityEngine.UI;
 // referenced much of codes from [SplitterOverConveyor](https://github.com/KingEnderBrine/-DSP-SplitterOverConveyor)
 //
 
-namespace SplitterOverBelt
+namespace SplitterOverBeltMod
 {
     [BepInPlugin(__GUID__, __NAME__, "1.1.3")]
     public class SplitterOverBelt : BaseUnityPlugin
@@ -33,6 +33,10 @@ namespace SplitterOverBelt
             new Harmony(__GUID__).PatchAll(typeof(Patch));
         }
 
+        public static void Log(string str)
+        {
+            Logger.LogInfo(str);
+        }
 
         private static void AddBeltEntity(EntityData e)
         {
@@ -523,17 +527,21 @@ namespace SplitterOverBelt
                         {
                             _doMod = true;
                         }
-                        else if (buildPreview.condition == EBuildCondition.Collide && CanBuildSplitter(__instance, buildPreview))
+                        else if (buildPreview.condition == EBuildCondition.Collide)
                         {
-                            __result = true;
-                            buildPreview.condition = EBuildCondition.Ok;
-                            __instance.actionBuild.model.cursorText = buildPreview.conditionText;
-                            __instance.actionBuild.model.cursorState = 0;
-                            if (!VFInput.onGUI)
+                            bool result = CanBuildSplitter(__instance, buildPreview);
+                            if (result)
                             {
-                                UICursor.SetCursor(ECursor.Default);
+                                __result = true;
+                                buildPreview.condition = EBuildCondition.Ok;
+                                __instance.actionBuild.model.cursorText = buildPreview.conditionText;
+                                __instance.actionBuild.model.cursorState = 0;
+                                if (!VFInput.onGUI)
+                                {
+                                    UICursor.SetCursor(ECursor.Default);
+                                }
+                                _doMod = true;
                             }
-                            _doMod = true;
                         }
                     }
                 }
