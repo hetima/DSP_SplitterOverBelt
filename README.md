@@ -19,8 +19,14 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.1.5
+- Revert program namespace (It doesn't affect the gaming experience)
+
 ### v1.1.4
 - Support Dark Fog Update(0.10.28.20771) (almost rebuild only)
+
+<details>
+<summary>Previous Changelog</summary>
 
 ### v1.1.3
 - Support game version 0.9.27.14546 (just rebuild only)
@@ -59,4 +65,6 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 ### v1.0.0
 
 - Initial Release for 0.7.18 game version
+
+</details>
 

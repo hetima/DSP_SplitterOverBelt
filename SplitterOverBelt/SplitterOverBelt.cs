@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace SplitterOverBelt
 {
-    [BepInPlugin(__GUID__, __NAME__, "1.1.3")]
+    [BepInPlugin(__GUID__, __NAME__, "1.1.5")]
     public class SplitterOverBelt : BaseUnityPlugin
     {
         public const string __NAME__ = "SplitterOverBelt";
