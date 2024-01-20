@@ -12,7 +12,7 @@ using UnityEngine.UI;
 // referenced much of codes from [SplitterOverConveyor](https://github.com/KingEnderBrine/-DSP-SplitterOverConveyor)
 //
 
-namespace SplitterOverBeltMod
+namespace SplitterOverBelt
 {
     [BepInPlugin(__GUID__, __NAME__, "1.1.3")]
     public class SplitterOverBelt : BaseUnityPlugin
