@@ -19,6 +19,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.1.6
+- Support game version 0.10.29.28154 (just rebuild only)
+
 ### v1.1.5
 - Revert program namespace (It doesn't affect the gaming experience)
 

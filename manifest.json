@@ -1,7 +1,7 @@
 {
     "name": "SplitterOverBelt",
     "description": "Splitter (and Piler) can be placed overlaps conveyor belts and properly connected.",
-    "version_number": "1.1.5",
+    "version_number": "1.1.6",
     "dependencies": [],
     "website_url": "https://github.com/hetima/DSP_SplitterOverBelt"
 }
