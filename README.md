@@ -19,6 +19,9 @@ Thanks to KingEnderBrine for developing SplitterOverConveyor and open sourced.
 
 ## Release Notes
 
+### v1.1.7
+- Support game version 0.10.30.23292
+
 ### v1.1.6
 - Support game version 0.10.29.28154 (just rebuild only)
 
