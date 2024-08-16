@@ -487,7 +487,7 @@ namespace SplitterOverBelt
             float gridSize = tool.actionBuild.planetAux.activeGrid.CalcLocalGridSize(buildPreview.lpos, buildPreview.lrot * buildPreview.desc.portPoses[0].forward);
             Vector3 calcPos = buildPreview.lpos + buildPreview.lrot * (Vector3.up * gridSize / 2);
 
-            BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(calcPos, gridSize * 1.4f, BuildToolAccess.nearObjectIds, false);
+            BuildToolAccess.nearObjectCount = tool.actionBuild.nearcdLogic.GetBuildingsInAreaNonAlloc(calcPos, gridSize * 1.4f, ref BuildToolAccess._nearObjectIds, false);
 
             for (int i = 0; i < BuildToolAccess.nearObjectCount; i++)
             {
